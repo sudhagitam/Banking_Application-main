@@ -9,6 +9,11 @@ export default function Login({ onLoginSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const trimmedCredentials = {
+        email: credentials.email.trim(),
+        password: credentials.password.trim()
+      };
+  // ... proceed with loginUser(trimmedCredentials)
     try {
       const response = await loginUser(credentials);
       const token = response.data.token || response.data.accessToken;

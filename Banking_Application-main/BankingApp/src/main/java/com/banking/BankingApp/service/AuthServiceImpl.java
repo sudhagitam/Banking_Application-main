@@ -78,6 +78,19 @@ public class AuthServiceImpl implements AuthService{
 
     @Override
     public AuthResponse login(LoginRequest request) {
+        System.out.println("=== EXACT INPUT DEBUG ===");
+        System.out.println("Raw Input String: [" + request.getPassword() + "]");
+        System.out.println("String Length: " + (request.getPassword() != null ? request.getPassword().length() : "NULL"));
+
+        // Direct BCrypt verification check in Java memory
+        boolean directMatch = passwordEncoder.matches(
+                request.getPassword(),
+                "$2a$10$8.UnVuG9HHgffUDAlk8qfOUVGkq8zgVymGe07xd00DMxs.AQubh4a"
+        );
+        System.out.println("Direct BCrypt Matches Check: " + directMatch);
+        System.out.println("=========================");
+
+
        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
        String jwt = jwtUtils.generateToken(request.getEmail());
        return new AuthResponse(jwt,"Login successful");

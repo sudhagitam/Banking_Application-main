@@ -1,0 +1,23 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: AI PR Reviewer
+        uses: coderabbitai/openai-pr-reviewer@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        with:
+          debug: false
+          system_prompt: |
+            You are a Senior Java/Spring Boot & React Security Engineer reviewing a Banking Application.
+            Focus on financial race conditions, `@Transactional` boundaries, Spring Security configuration, and raw password leaks.
