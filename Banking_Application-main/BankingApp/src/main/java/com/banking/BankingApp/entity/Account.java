@@ -1,5 +1,7 @@
 package com.banking.BankingApp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -25,9 +27,11 @@ public class Account {
 
 
     @OneToOne(mappedBy = "account")
+    @JsonIgnoreProperties("account") // Prevents User from looping back to Account
     private User user;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore // Prevents Account from trying to re-serialize its entire transaction list
     private List<Transaction> transactions = new ArrayList<>();
 
 

@@ -1,10 +1,16 @@
 package com.banking.BankingApp.service;
 
-import org.springframework.stereotype.Service;
+import com.banking.BankingApp.entity.Transaction;
+import org.springframework.data.domain.Page;
 
-@Service
 public interface TransactionService {
-    public void addMoney(String jwt,double amount);
-    public void debitMoney(String jwt,double amount);
-    public void transfer(String jwt,double amount,long receiverAccount);
+
+    void addMoney(String jwt, double amount);
+
+    void debitMoney(String jwt, double amount);
+
+    void transfer(String jwt, double amount, long receiverAccountNo);
+
+    // Update this signature to support pagination parameters (page and size)
+    Page<Transaction> getTransactionHistory(String jwt, int page, int size);
 }

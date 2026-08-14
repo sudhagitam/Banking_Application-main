@@ -1,47 +1,95 @@
 package com.banking.BankingApp.controller;
 
 import com.banking.BankingApp.dtos.TransferRequest;
+import com.banking.BankingApp.entity.Transaction;
 import com.banking.BankingApp.enums.TransactionType;
 import com.banking.BankingApp.exception.CustomException;
 import com.banking.BankingApp.service.TransactionService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/transaction")
+@RequestMapping("/api/transaction")
+@CrossOrigin(origins = "http://localhost:3000") // Match your frontend URL
 public class TransactionController {
-    @Autowired
-    TransactionService transactionService;
+
+    private final TransactionService transactionService;
+
+    // Preferred constructor injection over field injection
+    public TransactionController(TransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
+
+    /**
+     * Self-account Deposit or Withdrawal (CREDIT or DEBIT)
+     */
     @PostMapping("/{Type}")
-    public ResponseEntity<?> selfaccount(@RequestHeader("Authorization") String authHeader,@PathVariable TransactionType Type, @RequestParam double amount){
-        String jwt = null;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            jwt = authHeader.substring(7); //
+    public ResponseEntity<String> selfAccount(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable("Type") TransactionType type,
+            @RequestParam double amount) {
+
+        String jwt = extractJwt(authHeader);
+
+        if (amount <= 0) {
+            throw new CustomException("Transaction amount must be greater than zero");
         }
-        if(Type.equals(TransactionType.DEBIT)){
-            transactionService.debitMoney(jwt,amount);
+
+        if (TransactionType.DEBIT.equals(type)) {
+            transactionService.debitMoney(jwt, amount);
+        } else if (TransactionType.CREDIT.equals(type)) {
+            transactionService.addMoney(jwt, amount);
+        } else {
+            throw new CustomException("Invalid transaction type for self-account operations");
         }
-        else if(Type.equals(TransactionType.CREDIT)){
-            transactionService.addMoney(jwt,amount);
-        }
-        else{
-            throw new CustomException("Invalid transaction type");
-        }
+
         return ResponseEntity.ok("Transaction successful");
     }
-    @PostMapping("transfer")
-    public ResponseEntity<?> transferMoney(@RequestHeader("Authorization") String authHeader,@RequestBody TransferRequest request){
-        String jwt = null;
+
+    /**
+     * Fund Transfer to another account
+     */
+    @PostMapping("/transfer")
+    public ResponseEntity<String> transferMoney(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody TransferRequest request) {
+
+        String jwt = extractJwt(authHeader);
+
+        if (request == null || request.getAmount() <= 0) {
+            throw new CustomException("Transfer amount must be greater than zero");
+        }
+
+        transactionService.transfer(jwt, request.getAmount(), request.getReceiverAccount());
+        return ResponseEntity.ok("Money Transfer successful");
+    }
+
+    /**
+     * Get Paginated Transaction History
+     * Default: Page 0, 10 items per page
+     */
+    @GetMapping("/history")
+    public ResponseEntity<Page<Transaction>> getTransactionHistory(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        String jwt = extractJwt(authHeader);
+        Page<Transaction> historyPage = transactionService.getTransactionHistory(jwt, page, size);
+        return ResponseEntity.ok(historyPage);
+    }
+
+    /**
+     * Helper method to strip "Bearer " prefix from Authorization header
+     */
+    private String extractJwt(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            jwt = authHeader.substring(7); //
+            return authHeader.substring(7).trim();
         }
-        if(request.getAmount()>100) {
-            transactionService.transfer(jwt,request.getAmount(), request.getReceiverAccount());
-            return ResponseEntity.ok("Money Transfer successful");
+        if (authHeader != null && !authHeader.isBlank()) {
+            return authHeader.trim();
         }
-        else{
-            throw new CustomException("Insufficient amount");
-        }
+        throw new CustomException("Missing or invalid Authorization header");
     }
 }

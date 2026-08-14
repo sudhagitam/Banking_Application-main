@@ -1,6 +1,7 @@
 package com.banking.BankingApp.entity;
 
 import com.banking.BankingApp.enums.TransactionType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -17,7 +18,7 @@ public class Transaction {
     private LocalDateTime time;
 
     private double amount;
-
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;

@@ -19,8 +19,15 @@ public class CustomerUserDetails implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+        System.out.println("=== DEBUG LOGIN ===");
+        System.out.println("Lookup Email: " + username);
+        System.out.println("Password Hash in DB: " + user.getPassword());
+        System.out.println("Hash Length: " + (user.getPassword() != null ? user.getPassword().length() : 0));
+        System.out.println("===================");
+
         return user;
     }
+
     public User getUserFromJwtToken(String token) {
         // Extract username/email from token
         String username = jwtUtils.extractUsername(token);
