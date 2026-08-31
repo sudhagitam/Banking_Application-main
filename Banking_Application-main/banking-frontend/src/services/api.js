@@ -1,5 +1,8 @@
 ﻿import axios from 'axios';
 
+//Setup Axios instance with base URL targeting the backend API URL.
+//This allows for cleaner API calls throughout the application.
+
 const API = axios.create({
   baseURL: 'http://localhost:8080/api',
 });

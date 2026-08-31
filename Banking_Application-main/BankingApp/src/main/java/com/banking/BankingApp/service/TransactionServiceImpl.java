@@ -14,6 +14,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+
 @Service
 @Transactional
 public class TransactionServiceImpl implements TransactionService {
@@ -77,33 +79,17 @@ public class TransactionServiceImpl implements TransactionService {
             throw new CustomException("Recipient account not found");
         }
 
-        if (senderAccount.getBalance() < amount) {
-            throw new CustomException("Insufficient balance for transfer");
+        // Delegate execution to the DB Stored Procedure
+        String result = accountRepository.transferFunds(
+                senderAccount.getId(),
+                receiverAccount.getId(),
+                BigDecimal.valueOf(amount)
+        );
+
+        // Throw custom exception if procedure returns error string
+        if (result != null && result.startsWith("ERROR")) {
+            throw new CustomException(result);
         }
-
-        // 1. Update Balances
-        senderAccount.setBalance(senderAccount.getBalance() - amount);
-        receiverAccount.setBalance(receiverAccount.getBalance() + amount);
-
-        // 2. Sender Transaction Record (DEBIT_TRANSFER)
-        Transaction sTransaction = new Transaction();
-        sTransaction.setAccount(senderAccount);
-        sTransaction.setAmount(amount);
-        sTransaction.setType(TransactionType.DEBIT_TRANSFER);
-        sTransaction.setCounterParty(receiverAccountNo);
-
-        // 3. Receiver Transaction Record (CREDIT_TRANSFER)
-        Transaction rTransaction = new Transaction();
-        rTransaction.setAccount(receiverAccount);
-        rTransaction.setAmount(amount);
-        rTransaction.setType(TransactionType.CREDIT_TRANSFER);
-        rTransaction.setCounterParty(senderAccount.getAccountNumber());
-
-        // 4. Save entities
-        accountRepository.save(senderAccount);
-        accountRepository.save(receiverAccount);
-        transactionRepository.save(sTransaction);
-        transactionRepository.save(rTransaction);
     }
 
     @Override

@@ -14,4 +14,8 @@ public interface AccountService {
     public AccountDTO getAccountDetails(String jwt);
     public double getUserBalance(String jwt);
     public List<TransactionResponse>  getAllTransactions(String jwt);
+
+    // New transfer method definition
+    public String transferMoney(String jwt, Long receiverAccountId, BigDecimal amount);
+
 }
